@@ -314,7 +314,7 @@
       <div class="panel">
         <div class="panel-head">
           <div class="panel-title">آخر الأوامر</div>
-          <div class="panel-refresh mono" id="cmd-refresh-tag">تحديث كل 5 ثواني</div>
+          <div class="panel-refresh mono" id="cmd-refresh-tag">تحديث فوري</div>
         </div>
         <div id="cmd-list"></div>
       </div>
@@ -324,6 +324,7 @@
 <script>
 (function(){
   const API = 'https://inverter-backend.duckdns.org';
+  const WS_URL = 'wss://inverter-backend.duckdns.org/ws';
   const $ = (id) => document.getElementById(id);
 
   const loginScreen = $('login-screen');
@@ -344,8 +345,8 @@
   const cmdList = $('cmd-list');
 
   let currentUser = null;
-  let statusTimer = null;
-  let commandsTimer = null;
+  let ws = null;
+  let wsReconnectTimer = null;
   let pollingCommandId = null;
   let busy = false;
 
@@ -458,6 +459,40 @@
     } catch (e) { /* silent */ }
   }
 
+  // ---------------- WebSocket (تحديث فوري بدل الاستعلام الدوري) ----------------
+  function connectWS() {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+    };
+
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch (_) { return; }
+
+      if (msg.type === 'device_status') {
+        if (!pollingCommandId) renderPowerState(msg.data);
+      } else if (msg.type === 'command_ack') {
+        refreshCommands();
+      }
+    };
+
+    ws.onclose = () => {
+      wsReconnectTimer = setTimeout(connectWS, 3000);
+    };
+
+    ws.onerror = () => {
+      ws.close();
+    };
+  }
+
+  function disconnectWS() {
+    if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+    if (ws) { ws.onclose = null; ws.close(); ws = null; }
+  }
+
   async function pollCommand(requestId) {
     pollingCommandId = requestId;
     renderPending();
@@ -515,7 +550,7 @@
 
   $('logout-btn').addEventListener('click', async () => {
     try { await api('/api/auth/logout', { method: 'POST' }); } catch (_) {}
-    clearInterval(statusTimer); clearInterval(commandsTimer);
+    disconnectWS();
     dashboard.classList.add('hidden');
     loginScreen.classList.remove('hidden');
     $('password').value = '';
@@ -525,9 +560,9 @@
     loginScreen.classList.add('hidden');
     dashboard.classList.remove('hidden');
     userChip.textContent = `${currentUser.name} · ${currentUser.role === 'admin' ? 'مدير' : 'مشغّل'}`;
-    refreshStatus(); refreshCommands();
-    statusTimer = setInterval(refreshStatus, 5000);
-    commandsTimer = setInterval(refreshCommands, 8000);
+    refreshStatus();
+    refreshCommands();
+    connectWS();
   }
 
   (async function init() {
