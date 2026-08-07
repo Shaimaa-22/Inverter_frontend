@@ -188,6 +188,32 @@
     tick();
   }
 
+  // ---------------- تبديل العروض (التحكم / سجل الأوامر) ----------------
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  const glider = document.querySelector('.tab-glider');
+  function moveGlider(tab) {
+    if (!glider || !tab) return;
+    glider.style.width = tab.offsetWidth + 'px';
+    glider.style.transform = `translateX(${tab.offsetLeft}px)`;
+  }
+  function activateTab(tab) {
+    const view = tab.dataset.view;
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.view').forEach(v => {
+      v.classList.toggle('is-active', v.id === 'view-' + view);
+    });
+    moveGlider(tab);
+  }
+  tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
+  window.addEventListener('resize', () => {
+    const active = document.querySelector('.tab.is-active');
+    if (active) moveGlider(active);
+  });
+
   powerBtn.addEventListener('click', async () => {
     if (busy || powerBtn.disabled) return;
     const wantsOn = powerBtn.classList.contains('state-off');
@@ -236,6 +262,10 @@
     loginScreen.classList.add('hidden');
     dashboard.classList.remove('hidden');
     userChip.textContent = `${currentUser.name} · ${currentUser.role === 'admin' ? 'مدير' : 'مشغّل'}`;
+    requestAnimationFrame(() => {
+      const active = document.querySelector('.tab.is-active');
+      if (active) moveGlider(active);
+    });
     refreshStatus();
     refreshCommands();
     connectWS();
