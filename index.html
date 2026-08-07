@@ -324,8 +324,7 @@
 <script>
 (function(){
   const API = '';
-const WS_URL = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws';
-  const $ = (id) => document.getElementById(id);
+const WS_URL = 'wss://inverter-backend.duckdns.org/ws';  const $ = (id) => document.getElementById(id);
 
   const loginScreen = $('login-screen');
   const dashboard = $('dashboard');
