@@ -3,258 +3,50 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>لوحة تحكم الإنفرتر — inverter-01</title>
+<meta name="theme-color" content="#0b0f14" />
+<title>لوحة تحكم الإنفرتر — INVERTER-01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#0a0c0f;
-    --bg-grid: rgba(255,255,255,0.025);
-    --surface:#12151a;
-    --surface-raised:#181c22;
-    --border:#232830;
-    --border-soft:#1a1e24;
-    --text:#edeff2;
-    --text-muted:#8a919c;
-    --text-dim:#4a5058;
-    --amber:#e8a33d;
-    --amber-glow:rgba(232,163,61,0.32);
-    --amber-dim:rgba(232,163,61,0.12);
-    --red:#d6584b;
-    --red-glow:rgba(214,88,75,0.28);
-    --green:#4faf82;
-    --green-glow:rgba(79,175,130,0.28);
-    --radius:14px;
-    --mono:'JetBrains Mono', monospace;
-    --sans:'IBM Plex Sans Arabic','Segoe UI',sans-serif;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{height:100%;}
-  body{
-    background:
-      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(232,163,61,0.06), transparent 60%),
-      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/40px 40px,
-      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/40px 40px,
-      var(--bg);
-    color:var(--text);
-    font-family:var(--sans);
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    -webkit-font-smoothing:antialiased;
-  }
-  ::selection{background:var(--amber-glow); color:var(--text);}
-  button{font-family:inherit; cursor:pointer;}
-  input{font-family:inherit;}
-  .mono{font-family:var(--mono);}
-
-  /* ---------- utility ---------- */
-  .hidden{display:none !important;}
-  .dot{width:7px; height:7px; border-radius:50%; flex-shrink:0;}
-  .dot.on{background:var(--green); box-shadow:0 0 8px var(--green-glow);}
-  .dot.off{background:var(--red); box-shadow:0 0 8px var(--red-glow);}
-  .dot.pulse{animation:dotpulse 2s ease-in-out infinite;}
-  @keyframes dotpulse{0%,100%{opacity:1;} 50%{opacity:.4;}}
-
-  /* ---------- login ---------- */
-  #login-screen{
-    flex:1; display:flex; align-items:center; justify-content:center; padding:24px;
-  }
-  .login-card{
-    width:100%; max-width:380px;
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:36px 32px 32px;
-    position:relative;
-    overflow:hidden;
-  }
-  .login-card::before{
-    content:''; position:absolute; top:0; right:0; left:0; height:2px;
-    background:linear-gradient(90deg, transparent, var(--amber), transparent);
-    opacity:.7;
-  }
-  .login-eyebrow{
-    font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--amber);
-    text-transform:uppercase; display:flex; align-items:center; gap:8px; margin-bottom:6px;
-  }
-  .login-eyebrow .dot{background:var(--amber); box-shadow:0 0 8px var(--amber-glow);}
-  .login-title{font-size:22px; font-weight:700; margin-bottom:26px;}
-  .field{margin-bottom:16px;}
-  .field label{
-    display:block; font-size:12px; color:var(--text-muted); margin-bottom:7px; font-weight:500;
-  }
-  .field input{
-    width:100%; background:var(--bg); border:1px solid var(--border); border-radius:9px;
-    padding:12px 14px; color:var(--text); font-size:14px; outline:none;
-    transition:border-color .15s;
-  }
-  .field input:focus{border-color:var(--amber);}
-  .btn-primary{
-    width:100%; background:var(--amber); color:#1a1206; border:none; border-radius:9px;
-    padding:13px; font-size:14px; font-weight:700; margin-top:6px;
-    transition:filter .15s, transform .1s;
-  }
-  .btn-primary:hover{filter:brightness(1.08);}
-  .btn-primary:active{transform:scale(.98);}
-  .btn-primary:disabled{opacity:.55; cursor:not-allowed;}
-  .login-error{
-    background:var(--red-glow); border:1px solid rgba(214,88,75,.4); color:#ffb3ab;
-    font-size:12.5px; padding:9px 12px; border-radius:8px; margin-bottom:14px;
-  }
-
-  /* ---------- shell ---------- */
-  #dashboard{flex:1; display:flex; flex-direction:column;}
-  header{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:18px 28px; border-bottom:1px solid var(--border-soft);
-  }
-  .brand{display:flex; align-items:center; gap:10px;}
-  .brand-id{font-family:var(--mono); font-size:13px; font-weight:600; letter-spacing:.03em;}
-  .brand-sep{color:var(--text-dim);}
-  .conn-pill{
-    display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11.5px;
-    color:var(--text-muted); background:var(--surface); border:1px solid var(--border);
-    padding:5px 11px; border-radius:100px;
-  }
-  .header-right{display:flex; align-items:center; gap:12px;}
-  .user-chip{font-size:12.5px; color:var(--text-muted);}
-  .btn-ghost{
-    background:transparent; border:1px solid var(--border); color:var(--text-muted);
-    padding:7px 14px; border-radius:8px; font-size:12.5px; transition:all .15s;
-  }
-  .btn-ghost:hover{border-color:var(--text-dim); color:var(--text);}
-
-  main{
-    flex:1; display:flex; flex-direction:column; align-items:center;
-    padding:36px 20px 60px; gap:36px;
-  }
-
-  /* ---------- fault banner ---------- */
-  .fault-banner{
-    width:100%; max-width:640px; background:var(--red-glow); border:1px solid rgba(214,88,75,.45);
-    border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:10px;
-    font-size:13px; color:#ffcdc6;
-  }
-
-  /* ---------- signature switch ---------- */
-  .switch-zone{display:flex; flex-direction:column; align-items:center; gap:18px;}
-  .switch-wrap{position:relative; width:220px; height:220px;}
-  svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
-  .ring-track{fill:none; stroke:var(--border); stroke-width:2.5;}
-  .ring-heartbeat{
-    fill:none; stroke:var(--green); stroke-width:2.5; stroke-linecap:round;
-    stroke-dasharray:12 300; opacity:.9;
-    animation:heartbeat-run 3.2s linear infinite;
-  }
-  .ring-heartbeat.offline{animation-play-state:paused; opacity:0; }
-  @keyframes heartbeat-run{ to{ stroke-dashoffset:-312; } }
-
-  #power-btn{
-    position:absolute; inset:16px; border-radius:50%; border:1px solid var(--border);
-    background:radial-gradient(circle at 50% 40%, var(--surface-raised), var(--surface));
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
-    transition:box-shadow .3s, border-color .3s, transform .12s;
-  }
-  #power-btn:active{transform:scale(.97);}
-  #power-btn:disabled{cursor:wait;}
-  #power-btn .icon{
-    width:34px; height:34px; border-radius:50%; border:2.5px solid var(--text-dim);
-    position:relative; transition:border-color .3s, box-shadow .3s;
-  }
-  #power-btn .icon::before{
-    content:''; position:absolute; top:-4px; right:50%; width:2.5px; height:14px;
-    background:var(--text-dim); transform:translateX(50%); border-radius:2px;
-    transition:background .3s;
-  }
-  #power-btn .state-label{font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.06em; color:var(--text-muted);}
-  #power-btn .state-sub{font-size:11px; color:var(--text-dim);}
-
-  #power-btn.state-on{border-color:rgba(232,163,61,.5); box-shadow:0 0 42px var(--amber-glow), inset 0 0 24px rgba(232,163,61,.08);}
-  #power-btn.state-on .icon{border-color:var(--amber); box-shadow:0 0 14px var(--amber-glow);}
-  #power-btn.state-on .icon::before{background:var(--amber);}
-  #power-btn.state-on .state-label{color:var(--amber);}
-
-  #power-btn.state-off .icon{border-color:var(--text-muted);}
-  #power-btn.state-off .icon::before{background:var(--text-muted);}
-  #power-btn.state-off .state-label{color:var(--text);}
-
-  #power-btn.state-offline{border-color:rgba(214,88,75,.4);}
-  #power-btn.state-offline .icon{border-color:var(--red);}
-  #power-btn.state-offline .icon::before{background:var(--red);}
-  #power-btn.state-offline .state-label{color:var(--red);}
-
-  #power-btn.state-pending .icon{animation:spin 1s linear infinite; border-style:dashed;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-
-  .relay-caption{font-family:var(--mono); font-size:11.5px; color:var(--text-dim); text-align:center; max-width:260px; line-height:1.6;}
-
-  /* ---------- stats grid ---------- */
-  .stats-grid{
-    width:100%; max-width:640px; display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;
-  }
-  .stat-card{
-    background:var(--surface); border:1px solid var(--border); border-radius:10px;
-    padding:13px 14px; display:flex; flex-direction:column; gap:5px;
-  }
-  .stat-label{font-size:10.5px; color:var(--text-dim); letter-spacing:.04em;}
-  .stat-value{font-family:var(--mono); font-size:15px; font-weight:600;}
-
-  /* ---------- commands log ---------- */
-  .panel{
-    width:100%; max-width:640px; background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius); overflow:hidden;
-  }
-  .panel-head{
-    padding:14px 18px; border-bottom:1px solid var(--border-soft);
-    display:flex; align-items:center; justify-content:space-between;
-  }
-  .panel-title{font-size:13px; font-weight:700;}
-  .panel-refresh{font-family:var(--mono); font-size:10.5px; color:var(--text-dim);}
-  .cmd-row{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:11px 18px; border-bottom:1px solid var(--border-soft); font-size:12.5px;
-  }
-  .cmd-row:last-child{border-bottom:none;}
-  .cmd-left{display:flex; align-items:center; gap:10px; color:var(--text-muted);}
-  .cmd-cmd{font-family:var(--mono); font-weight:700; width:34px;}
-  .cmd-cmd.ON{color:var(--amber);}
-  .cmd-cmd.OFF{color:var(--text-muted);}
-  .badge{
-    font-family:var(--mono); font-size:10px; padding:3px 8px; border-radius:100px;
-    text-transform:uppercase; letter-spacing:.03em;
-  }
-  .badge.confirmed{background:var(--green-glow); color:#a8e0c4;}
-  .badge.sent, .badge.pending{background:var(--amber-dim); color:var(--amber);}
-  .badge.failed, .badge.timeout{background:var(--red-glow); color:#ffb3ab;}
-  .empty-row{padding:24px; text-align:center; color:var(--text-dim); font-size:12.5px;}
-
-  @media (max-width:520px){
-    .stats-grid{grid-template-columns:repeat(2,1fr);}
-    header{padding:16px;}
-  }
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <!-- ============ LOGIN ============ -->
   <div id="login-screen">
     <div class="login-card">
-      <div class="login-eyebrow"><span class="dot"></span> INVERTER-01 · ACCESS</div>
-      <div class="login-title">تسجيل الدخول</div>
+      <div class="login-brand">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"></path>
+          </svg>
+        </span>
+        <div class="login-brand-text">
+          <span class="login-brand-name">نظام التحكم بالإنفرتر</span>
+          <span class="login-brand-id mono">INVERTER-01</span>
+        </div>
+      </div>
+
+      <div class="login-heading">
+        <h1 class="login-title">تسجيل الدخول</h1>
+        <p class="login-subtitle">أدخل بيانات الاعتماد للوصول إلى وحدة التحكم</p>
+      </div>
+
       <div id="login-error" class="login-error hidden"></div>
-      <form id="login-form">
+
+      <form id="login-form" novalidate>
         <div class="field">
           <label for="username">اسم المستخدم</label>
-          <input id="username" type="text" autocomplete="username" required />
+          <input id="username" type="text" autocomplete="username" placeholder="أدخل اسم المستخدم" required />
         </div>
         <div class="field">
           <label for="password">كلمة المرور</label>
-          <input id="password" type="password" autocomplete="current-password" required />
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
         </div>
         <button class="btn-primary" type="submit" id="login-btn">دخول</button>
       </form>
+
+      <div class="login-foot mono">اتصال مُشفّر · وصول مُصرّح فقط</div>
     </div>
   </div>
 
@@ -262,318 +54,80 @@
   <div id="dashboard" class="hidden">
     <header>
       <div class="brand">
+        <span class="logo-mark sm" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"></path>
+          </svg>
+        </span>
         <span class="brand-id mono">INVERTER-01</span>
-        <span class="brand-sep">·</span>
         <span class="conn-pill"><span id="conn-dot" class="dot off"></span><span id="conn-text">—</span></span>
       </div>
       <div class="header-right">
         <span class="user-chip" id="user-chip"></span>
-        <button class="btn-ghost" id="logout-btn">خروج</button>
+        <button class="btn-ghost" id="logout-btn">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+          <span>خروج</span>
+        </button>
       </div>
     </header>
 
     <main>
-      <div id="fault-banner" class="fault-banner hidden">
-        <span>⚠</span><span id="fault-text"></span>
-      </div>
+      <div class="main-inner">
+        <div id="fault-banner" class="fault-banner hidden">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span id="fault-text"></span>
+        </div>
 
-      <div class="switch-zone">
-        <div class="switch-wrap">
-          <svg class="ring" viewBox="0 0 220 220">
-            <circle class="ring-track" cx="110" cy="110" r="106"></circle>
-            <circle id="heartbeat-ring" class="ring-heartbeat offline" cx="110" cy="110" r="106"></circle>
-          </svg>
-          <button id="power-btn" class="state-off" disabled>
-            <div class="icon"></div>
-            <div class="state-label" id="state-label">—</div>
-            <div class="state-sub" id="state-sub">جاري التحميل</div>
-          </button>
-        </div>
-        <div class="relay-caption" id="relay-caption">اضغطي للتشغيل أو الإطفاء — الأمر بيتأكد فعليًا من الجهاز قبل ما تتغير الحالة</div>
-      </div>
+        <section class="control-card">
+          <div class="card-eyebrow mono">وحدة التحكم الرئيسية</div>
+          <div class="switch-zone">
+            <div class="switch-wrap">
+              <svg class="ring" viewBox="0 0 220 220">
+                <circle class="ring-track" cx="110" cy="110" r="106"></circle>
+                <circle id="heartbeat-ring" class="ring-heartbeat offline" cx="110" cy="110" r="106"></circle>
+              </svg>
+              <button id="power-btn" class="state-off" disabled>
+                <div class="icon"></div>
+                <div class="state-label" id="state-label">—</div>
+                <div class="state-sub" id="state-sub">جاري التحميل</div>
+              </button>
+            </div>
+            <div class="relay-caption" id="relay-caption">اضغط للتشغيل أو الإطفاء — يتم تأكيد الأمر فعليًا من الجهاز قبل تغيير الحالة</div>
+          </div>
+        </section>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">قوة الإشارة</div>
-          <div class="stat-value" id="stat-rssi">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">مدة التشغيل</div>
-          <div class="stat-value" id="stat-uptime">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">الفيرموير</div>
-          <div class="stat-value" id="stat-fw">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">آخر اتصال</div>
-          <div class="stat-value" id="stat-lastseen">—</div>
-        </div>
-      </div>
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">قوة الإشارة</div>
+            <div class="stat-value mono" id="stat-rssi">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">مدة التشغيل</div>
+            <div class="stat-value mono" id="stat-uptime">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">إصدار الفيرموير</div>
+            <div class="stat-value mono" id="stat-fw">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">آخر اتصال</div>
+            <div class="stat-value mono" id="stat-lastseen">—</div>
+          </div>
+        </section>
 
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">آخر الأوامر</div>
-          <div class="panel-refresh mono" id="cmd-refresh-tag">تحديث فوري</div>
-        </div>
-        <div id="cmd-list"></div>
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">سجل الأوامر</div>
+            <div class="panel-refresh mono" id="cmd-refresh-tag"><span class="live-dot"></span> تحديث فوري</div>
+          </div>
+          <div id="cmd-list"></div>
+        </section>
       </div>
     </main>
+
+    <footer class="app-foot mono">لوحة تحكم الإنفرتر · اتصال آمن في الوقت الفعلي</footer>
   </div>
 
-<script>
-(function(){
-  const API = '';
-const WS_URL = 'wss://inverter-backend.duckdns.org/ws';  const $ = (id) => document.getElementById(id);
-
-  const loginScreen = $('login-screen');
-  const dashboard = $('dashboard');
-  const loginForm = $('login-form');
-  const loginError = $('login-error');
-  const loginBtn = $('login-btn');
-  const powerBtn = $('power-btn');
-  const heartbeatRing = $('heartbeat-ring');
-  const stateLabel = $('state-label');
-  const stateSub = $('state-sub');
-  const relayCaption = $('relay-caption');
-  const connDot = $('conn-dot');
-  const connText = $('conn-text');
-  const userChip = $('user-chip');
-  const faultBanner = $('fault-banner');
-  const faultText = $('fault-text');
-  const cmdList = $('cmd-list');
-
-  let currentUser = null;
-  let ws = null;
-  let wsReconnectTimer = null;
-  let pollingCommandId = null;
-  let busy = false;
-
-  async function api(path, opts = {}) {
-    const res = await fetch(API + path, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
-      ...opts,
-    });
-    let body = null;
-    try { body = await res.json(); } catch (_) {}
-    if (!res.ok) {
-      const err = new Error(body?.error?.message || 'حدث خطأ غير متوقع');
-      err.code = body?.error?.code;
-      err.status = res.status;
-      throw err;
-    }
-    return body?.data;
-  }
-
-  function fmtUptime(sec) {
-    if (sec == null) return '—';
-    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
-    return h > 0 ? `${h}س ${m}د` : `${m}د`;
-  }
-  function fmtAgo(iso) {
-    if (!iso) return '—';
-    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-    if (diff < 5) return 'الآن';
-    if (diff < 60) return `${diff}ث`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}د`;
-    return `${Math.floor(diff / 3600)}س`;
-  }
-  const CMD_LABEL = { pending: 'قيد الإرسال', sent: 'أُرسل', confirmed: 'مؤكد', failed: 'فشل', timeout: 'انتهت المهلة' };
-
-  function renderPowerState(device) {
-    powerBtn.classList.remove('state-on', 'state-off', 'state-offline', 'state-pending');
-    if (!device || !device.esp_online) {
-      powerBtn.classList.add('state-offline');
-      stateLabel.textContent = 'غير متصل';
-      stateSub.textContent = 'ESP32 offline';
-      heartbeatRing.classList.add('offline');
-      connDot.className = 'dot off pulse';
-      connText.textContent = 'غير متصل';
-      powerBtn.disabled = true;
-      return;
-    }
-    heartbeatRing.classList.remove('offline');
-    connDot.className = 'dot on pulse';
-    connText.textContent = 'متصل';
-    powerBtn.disabled = busy;
-
-    if (device.relay_state === 'ON') {
-      powerBtn.classList.add('state-on');
-      stateLabel.textContent = 'شغّال';
-      stateSub.textContent = device.inverter_state || 'RUNNING';
-    } else {
-      powerBtn.classList.add('state-off');
-      stateLabel.textContent = 'مطفي';
-      stateSub.textContent = device.inverter_state || 'STOPPED';
-    }
-
-    if (device.fault_code) {
-      faultBanner.classList.remove('hidden');
-      faultText.textContent = `خطأ بالجهاز: ${device.fault_code}`;
-    } else {
-      faultBanner.classList.add('hidden');
-    }
-
-    $('stat-rssi').textContent = device.wifi_rssi != null ? `${device.wifi_rssi} dBm` : '—';
-    $('stat-uptime').textContent = fmtUptime(device.uptime_seconds);
-    $('stat-fw').textContent = device.firmware_version || '—';
-    $('stat-lastseen').textContent = fmtAgo(device.last_seen);
-  }
-
-  function renderPending() {
-    powerBtn.classList.remove('state-on', 'state-off', 'state-offline');
-    powerBtn.classList.add('state-pending');
-    stateSub.textContent = 'جاري التنفيذ…';
-    powerBtn.disabled = true;
-  }
-
-  async function refreshStatus() {
-    try {
-      const { device } = await api('/api/device/status');
-      if (!pollingCommandId) renderPowerState(device);
-    } catch (e) {
-      connDot.className = 'dot off';
-      connText.textContent = 'خطأ اتصال';
-    }
-  }
-
-  async function refreshCommands() {
-    try {
-      const data = await api('/api/logs/commands');
-      const rows = (data?.commands || data || []).slice(0, 8);
-      if (!rows.length) {
-        cmdList.innerHTML = '<div class="empty-row">ما في أوامر مسجّلة بعد</div>';
-        return;
-      }
-      cmdList.innerHTML = rows.map(c => `
-        <div class="cmd-row">
-          <div class="cmd-left">
-            <span class="cmd-cmd ${c.command}">${c.command}</span>
-            <span>${fmtAgo(c.created_at)}</span>
-          </div>
-          <span class="badge ${c.status}">${CMD_LABEL[c.status] || c.status}</span>
-        </div>
-      `).join('');
-    } catch (e) { /* silent */ }
-  }
-
-  // ---------------- WebSocket (تحديث فوري بدل الاستعلام الدوري) ----------------
-  function connectWS() {
-    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
-    ws = new WebSocket(WS_URL);
-
-    ws.onopen = () => {
-      if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
-    };
-
-    ws.onmessage = (ev) => {
-      let msg;
-      try { msg = JSON.parse(ev.data); } catch (_) { return; }
-
-      if (msg.type === 'device_status') {
-        if (!pollingCommandId) renderPowerState(msg.data);
-      } else if (msg.type === 'command_ack') {
-        refreshCommands();
-      }
-    };
-
-    ws.onclose = () => {
-      wsReconnectTimer = setTimeout(connectWS, 3000);
-    };
-
-    ws.onerror = () => {
-      ws.close();
-    };
-  }
-
-  function disconnectWS() {
-    if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
-    if (ws) { ws.onclose = null; ws.close(); ws = null; }
-  }
-
-  async function pollCommand(requestId) {
-    pollingCommandId = requestId;
-    renderPending();
-    const start = Date.now();
-    const tick = async () => {
-      if (Date.now() - start > 15000) { pollingCommandId = null; busy = false; refreshStatus(); refreshCommands(); return; }
-      try {
-        const { command } = await api(`/api/device/command/${requestId}`);
-        if (command.status === 'confirmed' || command.status === 'failed' || command.status === 'timeout') {
-          pollingCommandId = null; busy = false;
-          await refreshStatus(); await refreshCommands();
-          return;
-        }
-      } catch (e) { /* keep polling */ }
-      setTimeout(tick, 1200);
-    };
-    tick();
-  }
-
-  powerBtn.addEventListener('click', async () => {
-    if (busy || powerBtn.disabled) return;
-    const wantsOn = powerBtn.classList.contains('state-off');
-    const command = wantsOn ? 'ON' : 'OFF';
-    busy = true;
-    try {
-      const result = await api('/api/device/command', { method: 'POST', body: JSON.stringify({ command }) });
-      pollCommand(result.requestId);
-    } catch (e) {
-      busy = false;
-      relayCaption.textContent = e.message || 'تعذّر إرسال الأمر';
-      refreshStatus();
-    }
-  });
-
-  loginForm.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    loginError.classList.add('hidden');
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'جارٍ الدخول…';
-    try {
-      const { user } = await api('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: $('username').value, password: $('password').value }),
-      });
-      currentUser = user;
-      enterDashboard();
-    } catch (e) {
-      loginError.textContent = e.code === 'INVALID_CREDENTIALS' ? 'اسم المستخدم أو كلمة المرور غلط' : (e.message || 'تعذّر تسجيل الدخول');
-      loginError.classList.remove('hidden');
-    } finally {
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'دخول';
-    }
-  });
-
-  $('logout-btn').addEventListener('click', async () => {
-    try { await api('/api/auth/logout', { method: 'POST' }); } catch (_) {}
-    disconnectWS();
-    dashboard.classList.add('hidden');
-    loginScreen.classList.remove('hidden');
-    $('password').value = '';
-  });
-
-  function enterDashboard() {
-    loginScreen.classList.add('hidden');
-    dashboard.classList.remove('hidden');
-    userChip.textContent = `${currentUser.name} · ${currentUser.role === 'admin' ? 'مدير' : 'مشغّل'}`;
-    refreshStatus();
-    refreshCommands();
-    connectWS();
-  }
-
-  (async function init() {
-    try {
-      const { user } = await api('/api/auth/me');
-      currentUser = user;
-      enterDashboard();
-    } catch (e) {
-      loginScreen.classList.remove('hidden');
-    }
-  })();
-})();
-</script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
