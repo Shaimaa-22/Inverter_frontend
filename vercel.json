@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://inverter-backend.duckdns.org/api/$1" },
-    { "source": "/ws", "destination": "https://inverter-backend.duckdns.org/ws" }
+    { "source": "/api/(.*)", "destination": "https://inverter-backend.duckdns.org/api/$1" }
   ]
 }
