@@ -503,3 +503,10 @@ svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important; transition:none !important;}
 }
+.user-row.is-disabled{ opacity:.5; }
+.user-role-badge.disabled{
+  background:rgba(255,255,255,.05); color:var(--dim); border:1px solid var(--line);
+}
+.user-delete-btn.is-reactivate:hover{
+  border-color:var(--amber); color:var(--amber); background:var(--amber-soft);
+}
