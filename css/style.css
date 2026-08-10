@@ -413,9 +413,79 @@ svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
 
 /* ---------- footer ---------- */
 .app-foot{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
   text-align:center; padding:20px; font-size:10.5px; color:var(--dim);
   letter-spacing:.05em; border-top:1px solid var(--line-soft);
 }
+.foot-client{
+  display:flex; align-items:center; gap:8px; font-size:10.5px; color:var(--muted);
+}
+.foot-client-logo{width:20px; height:20px; border-radius:6px; object-fit:contain;}
+#client-name{color:var(--text); font-weight:600;}
+
+/* ======================================================
+   FACTORY BADGE (login + header)
+   ====================================================== */
+.factory-badge{
+  display:flex; align-items:center; gap:10px;
+  background:rgba(15,21,32,0.6); border:1px solid var(--line-soft);
+  border-radius:var(--radius-sm); padding:9px 13px; margin-bottom:22px;
+}
+.factory-badge-logo{width:30px; height:30px; border-radius:8px; object-fit:contain; flex-shrink:0;}
+.factory-badge-text{font-size:11.5px; color:var(--muted);}
+.factory-badge-text strong{color:var(--text);}
+
+.header-divider{width:1px; height:20px; background:var(--line); margin-inline:2px;}
+.header-factory-logo{width:26px; height:26px; border-radius:7px; object-fit:contain;}
+@media (max-width:560px){
+  .header-factory-logo, .header-divider{display:none;}
+}
+
+/* ======================================================
+   USERS MANAGEMENT
+   ====================================================== */
+.user-form{padding:18px 20px 20px;}
+.user-form-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.user-form select{
+  width:100%; background:rgba(7,10,15,0.7); border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:13px 15px; color:var(--text); font-size:14px; outline:none;
+  transition:border-color .18s, box-shadow .18s, background .18s;
+}
+.user-form select:focus{border-color:var(--amber); box-shadow:0 0 0 4px var(--amber-soft);}
+.user-form .btn-primary{width:auto; padding:12px 26px;}
+@media (max-width:560px){
+  .user-form-row{grid-template-columns:1fr;}
+}
+
+.user-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:14px 20px; border-bottom:1px solid var(--line-soft); font-size:12.5px;
+  transition:background .14s;
+}
+.user-row:last-child{border-bottom:none;}
+.user-row:hover{background:rgba(255,255,255,.02);}
+.user-row-left{display:flex; align-items:center; gap:12px; min-width:0;}
+.user-avatar{
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  display:grid; place-items:center; font-weight:700; font-size:13px;
+  background:var(--panel-3); color:var(--amber); border:1px solid var(--line);
+}
+.user-meta{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.user-meta-name{color:var(--text); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.user-meta-sub{font-family:var(--mono); color:var(--dim); font-size:11px;}
+.user-role-badge{
+  font-family:var(--mono); font-size:10px; padding:5px 11px; border-radius:100px;
+  letter-spacing:.02em; font-weight:600; flex-shrink:0;
+}
+.user-role-badge.admin{background:var(--amber-soft); color:var(--amber); border:1px solid rgba(255,180,61,.3);}
+.user-role-badge.operator{background:var(--panel-3); color:var(--muted); border:1px solid var(--line);}
+.user-delete-btn{
+  flex-shrink:0; display:grid; place-items:center; width:30px; height:30px; border-radius:9px;
+  background:transparent; border:1px solid var(--line); color:var(--dim);
+  transition:all .16s;
+}
+.user-delete-btn:hover{border-color:var(--red); color:#ffc0c6; background:var(--red-soft);}
+.user-delete-btn:disabled{opacity:.35; cursor:not-allowed;}
 
 /* ======================================================
    RESPONSIVE
