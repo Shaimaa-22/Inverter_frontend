@@ -140,8 +140,78 @@
   }
 
   // ---------------- إدارة المستخدمين (للمدير فقط) ----------------
+// ---------------- إدارة المستخدمين (للمدير فقط) ----------------
   const ROLE_LABEL = { admin: 'مدير', operator: 'مشغّل' };
 
+  function initials(name) {
+    if (!name) return '?';
+    return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  async function refreshUsers() {
+    if (!usersList) return;
+    try {
+      const data = await api('/api/users');
+      const rows = data?.users || data || [];
+      if (!rows.length) {
+        usersList.innerHTML = '<div class="empty-row">لا يوجد مستخدمون بعد</div>';
+        return;
+      }
+      usersList.innerHTML = rows.map(u => {
+        // الباك اند ممكن يرجّع الحقل isActive أو is_active — نتعامل مع الاثنين
+        const active = (u.isActive ?? u.is_active) !== false;
+        const isSelf = currentUser && u.id === currentUser.id;
+        return `
+        <div class="user-row ${active ? '' : 'is-disabled'}" data-id="${u.id}">
+          <div class="user-row-left">
+            <div class="user-avatar">${initials(u.name)}</div>
+            <div class="user-meta">
+              <span class="user-meta-name">${u.name || u.username}</span>
+              <span class="user-meta-sub mono">${u.username}</span>
+            </div>
+          </div>
+          <span class="user-role-badge ${u.role}">${ROLE_LABEL[u.role] || u.role}</span>
+          ${active ? '' : '<span class="user-role-badge disabled">معطّل</span>'}
+          <button
+            class="user-delete-btn ${active ? '' : 'is-reactivate'}"
+            data-id="${u.id}"
+            data-active="${active}"
+            ${isSelf ? 'disabled title="لا يمكنك تعديل حسابك الحالي"' : (active ? 'title="تعطيل المستخدم"' : 'title="إعادة تفعيل المستخدم"')}
+          >
+            ${active
+              ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
+              : '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg>'
+            }
+          </button>
+        </div>
+      `;
+      }).join('');
+      usersList.querySelectorAll('.user-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleUserActive(btn.dataset.id, btn.dataset.active === 'true', btn));
+      });
+    } catch (e) {
+      usersList.innerHTML = `<div class="empty-row">تعذّر تحميل المستخدمين${e.message ? ' — ' + e.message : ''}</div>`;
+    }
+  }
+
+  async function toggleUserActive(id, currentlyActive, btn) {
+    const confirmMsg = currentlyActive
+      ? 'هل أنت متأكدة من تعطيل هذا المستخدم؟ لن يستطيع تسجيل الدخول بعدها.'
+      : 'هل أنت متأكدة من إعادة تفعيل هذا المستخدم؟';
+    if (!confirm(confirmMsg)) return;
+
+    btn.disabled = true;
+    try {
+      await api(`/api/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: !currentlyActive }),
+      });
+      await refreshUsers();
+    } catch (e) {
+      alert(e.message || 'تعذّر تنفيذ العملية');
+      btn.disabled = false;
+    }
+  }
   function initials(name) {
     if (!name) return '?';
     return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
