@@ -140,7 +140,6 @@
   }
 
   // ---------------- إدارة المستخدمين (للمدير فقط) ----------------
-// ---------------- إدارة المستخدمين (للمدير فقط) ----------------
   const ROLE_LABEL = { admin: 'مدير', operator: 'مشغّل' };
 
   function initials(name) {
@@ -212,62 +211,6 @@
       btn.disabled = false;
     }
   }
-  function initials(name) {
-    if (!name) return '?';
-    return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  }
-
-  async function refreshUsers() {
-    if (!usersList) return;
-    try {
-      const data = await api('/api/users');
-      const rows = data?.users || data || [];
-      if (!rows.length) {
-        usersList.innerHTML = '<div class="empty-row">لا يوجد مستخدمون بعد</div>';
-        return;
-      }
-      usersList.innerHTML = rows.map(u => `
-        <div class="user-row" data-id="${u.id}">
-          <div class="user-row-left">
-            <div class="user-avatar">${initials(u.name)}</div>
-            <div class="user-meta">
-              <span class="user-meta-name">${u.name || u.username}</span>
-              <span class="user-meta-sub mono">${u.username}</span>
-            </div>
-          </div>
-          <span class="user-role-badge ${u.role}">${ROLE_LABEL[u.role] || u.role}</span>
-          <button class="user-delete-btn" data-id="${u.id}" ${currentUser && u.id === currentUser.id ? 'disabled title="لا يمكنك حذف حسابك الحالي"' : 'title="حذف المستخدم"'}>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-          </button>
-        </div>
-      `).join('');
-      usersList.querySelectorAll('.user-delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => deleteUser(btn.dataset.id, btn));
-      });
-    } catch (e) {
-      usersList.innerHTML = `<div class="empty-row">تعذّر تحميل المستخدمين${e.message ? ' — ' + e.message : ''}</div>`;
-    }
-  }
-
-async function deleteUser(id, btn) {
-  if (!confirm('هل أنت متأكدة من تعطيل هذا المستخدم؟')) return;
-
-  btn.disabled = true;
-
-  try {
-    await api(`/api/users/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        isActive: false
-      })
-    });
-
-    await refreshUsers();
-  } catch (e) {
-    alert(e.message || 'تعذّر تعطيل المستخدم');
-    btn.disabled = false;
-  }
-}
 
   if (addUserForm) {
     addUserForm.addEventListener('submit', async (ev) => {
@@ -298,116 +241,57 @@ async function deleteUser(id, btn) {
   }
 
   // ---------------- WebSocket (تحديث فوري بدل الاستعلام الدوري) ----------------
-  // ---------------- WebSocket (تحديث فوري بدل الاستعلام الدوري) ----------------
-
-async function connectWS() {
-  if (
-    ws &&
-    (
-      ws.readyState === WebSocket.OPEN ||
-      ws.readyState === WebSocket.CONNECTING
-    )
-  ) {
-    return;
-  }
-
-  try {
-    // Get a short-lived WebSocket token using the existing
-    // HttpOnly authentication cookie.
-    const data = await api('/api/auth/ws-token');
-
-    if (!data?.token) {
-      throw new Error('لم يتم الحصول على WebSocket token');
+  async function connectWS() {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+      return;
     }
 
-    const token = data.token;
-
-    const wsUrl =
-      `wss://inverter-backend.duckdns.org/ws?token=${encodeURIComponent(token)}`;
-
-    console.log('[WS] Connecting...');
-
-    ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      console.log('[WS] Connected');
-
-      if (wsReconnectTimer) {
-        clearTimeout(wsReconnectTimer);
-        wsReconnectTimer = null;
+    try {
+      // الحصول على WebSocket token قصير العمر باستخدام كوكي الجلسة الحالية
+      const data = await api('/api/auth/ws-token');
+      if (!data?.token) {
+        throw new Error('لم يتم الحصول على WebSocket token');
       }
-    };
+      const token = data.token;
+      const wsUrl = `wss://inverter-backend.duckdns.org/ws?token=${encodeURIComponent(token)}`;
 
-    ws.onmessage = (ev) => {
-      let msg;
+      console.log('[WS] Connecting...');
+      ws = new WebSocket(wsUrl);
 
-      try {
-        msg = JSON.parse(ev.data);
-      } catch (_) {
-        return;
-      }
+      ws.onopen = () => {
+        console.log('[WS] Connected');
+        if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+      };
 
-      if (msg.type === 'device_status') {
-        if (!pollingCommandId) {
-          renderPowerState(msg.data);
+      ws.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch (_) { return; }
+        if (msg.type === 'device_status') {
+          if (!pollingCommandId) renderPowerState(msg.data);
+        } else if (msg.type === 'command_ack') {
+          refreshCommands();
         }
-      } else if (msg.type === 'command_ack') {
-        refreshCommands();
-      }
-    };
+      };
 
-    ws.onclose = () => {
-      console.log('[WS] Connection closed');
+      ws.onclose = () => {
+        console.log('[WS] Connection closed');
+        ws = null;
+        if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = setTimeout(() => { connectWS(); }, 3000);
+      };
 
+      ws.onerror = (error) => {
+        console.error('[WS] Error:', error);
+        if (ws) ws.close();
+      };
+    } catch (error) {
+      console.error('[WS] Failed to obtain token/connect:', error);
       ws = null;
-
-      if (wsReconnectTimer) {
-        clearTimeout(wsReconnectTimer);
-      }
-
-      wsReconnectTimer = setTimeout(() => {
-        connectWS();
-      }, 3000);
-    };
-
-    ws.onerror = (error) => {
-      console.error('[WS] Error:', error);
-
-      if (ws) {
-        ws.close();
-      }
-    };
-
-  } catch (error) {
-    console.error(
-      '[WS] Failed to obtain token/connect:',
-      error
-    );
-
-    ws = null;
-
-    if (wsReconnectTimer) {
-      clearTimeout(wsReconnectTimer);
+      if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+      wsReconnectTimer = setTimeout(() => { connectWS(); }, 3000);
     }
-
-    wsReconnectTimer = setTimeout(() => {
-      connectWS();
-    }, 3000);
-  }
-}
-
-function disconnectWS() {
-  if (wsReconnectTimer) {
-    clearTimeout(wsReconnectTimer);
-    wsReconnectTimer = null;
   }
 
-  if (ws) {
-    ws.onclose = null;
-    ws.close();
-    ws = null;
-  }
-}
   function disconnectWS() {
     if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
     if (ws) { ws.onclose = null; ws.close(); ws = null; }
@@ -432,7 +316,7 @@ function disconnectWS() {
     tick();
   }
 
-  // ---------------- تبديل العروض (التحكم / سجل الأوامر) ----------------
+  // ---------------- تبديل العروض (التحكم / سجل الأوامر / المستخدمون) ----------------
   const tabs = Array.from(document.querySelectorAll('.tab'));
   const glider = document.querySelector('.tab-glider');
   function moveGlider(tab) {
