@@ -28,6 +28,11 @@
         <button class="lang-toggle" id="lang-toggle" type="button" aria-label="Language"></button>
       </div>
 
+      <div class="factory-badge">
+        <img src="assets/factory-logo.svg" alt="شعار المصنع" class="factory-badge-logo" />
+        <span class="factory-badge-text">مشروع تابع لـ <strong id="factory-name">اسم المصنع</strong></span>
+      </div>
+
       <div class="login-heading">
         <h1 class="login-title" data-i18n="login.title">تسجيل الدخول</h1>
         <p class="login-subtitle" data-i18n="login.subtitle">أدخل بيانات الاعتماد للوصول إلى وحدة التحكم</p>
@@ -61,6 +66,8 @@
           </svg>
         </span>
         <span class="brand-id mono">INVERTER-01</span>
+        <span class="header-divider" aria-hidden="true"></span>
+        <img src="assets/factory-logo.svg" alt="شعار المصنع" class="header-factory-logo" />
         <span class="conn-pill"><span id="conn-dot" class="dot off"></span><span id="conn-text">—</span></span>
       </div>
       <div class="header-right">
@@ -82,6 +89,10 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
           <span>سجل الأوامر</span>
           <span class="tab-live"></span>
+        </button>
+        <button class="tab hidden" data-view="users" id="tab-users" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>المستخدمون</span>
         </button>
         <span class="tab-glider" aria-hidden="true"></span>
       </div>
@@ -145,10 +156,60 @@
             <div id="cmd-list"></div>
           </section>
         </div>
+
+        <!-- ===== VIEW: USERS (admin only) ===== -->
+        <div id="view-users" class="view">
+          <section class="panel" data-anim>
+            <div class="panel-head">
+              <div class="panel-title">إضافة مستخدم جديد</div>
+            </div>
+            <form id="add-user-form" class="user-form">
+              <div class="user-form-row">
+                <div class="field">
+                  <label for="nu-name">الاسم</label>
+                  <input id="nu-name" type="text" placeholder="الاسم الكامل" required />
+                </div>
+                <div class="field">
+                  <label for="nu-username">اسم المستخدم</label>
+                  <input id="nu-username" type="text" autocomplete="off" placeholder="username" required />
+                </div>
+              </div>
+              <div class="user-form-row">
+                <div class="field">
+                  <label for="nu-password">كلمة المرور</label>
+                  <input id="nu-password" type="password" autocomplete="new-password" placeholder="••••••••" required />
+                </div>
+                <div class="field">
+                  <label for="nu-role">الصلاحية</label>
+                  <select id="nu-role">
+                    <option value="operator">مشغّل</option>
+                    <option value="admin">مدير</option>
+                  </select>
+                </div>
+              </div>
+              <div id="add-user-error" class="login-error hidden"></div>
+              <button class="btn-primary" type="submit" id="add-user-btn">إضافة المستخدم</button>
+            </form>
+          </section>
+
+          <section class="panel" data-anim>
+            <div class="panel-head">
+              <div class="panel-title">المستخدمون الحاليون</div>
+            </div>
+            <div id="users-list"></div>
+          </section>
+        </div>
       </div>
     </main>
 
-    <footer class="app-foot mono">لوحة تحكم الإنفرتر · اتصال آمن في الوقت الفعلي</footer>
+    <footer class="app-foot mono">
+      <div class="foot-line">لوحة تحكم الإنفرتر · اتصال آمن في الوقت الفعلي</div>
+      <div class="foot-client">
+        <span>تطوير</span>
+        <img src="assets/client-logo.svg" alt="شعار الشركة" class="foot-client-logo" />
+        <span id="client-name">اسم الشركة</span>
+      </div>
+    </footer>
   </div>
 
 <script type="module" src="js/app.js"></script>
