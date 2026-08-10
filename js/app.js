@@ -19,6 +19,11 @@
   const faultBanner = $('fault-banner');
   const faultText = $('fault-text');
   const cmdList = $('cmd-list');
+  const tabUsers = $('tab-users');
+  const usersList = $('users-list');
+  const addUserForm = $('add-user-form');
+  const addUserError = $('add-user-error');
+  const addUserBtn = $('add-user-btn');
 
   let currentUser = null;
   let ws = null;
@@ -135,6 +140,86 @@
     } catch (e) { /* silent */ }
   }
 
+  // ---------------- إدارة المستخدمين (للمدير فقط) ----------------
+  const ROLE_LABEL = { admin: 'مدير', operator: 'مشغّل' };
+
+  function initials(name) {
+    if (!name) return '?';
+    return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  async function refreshUsers() {
+    if (!usersList) return;
+    try {
+      const data = await api('/api/admin/users');
+      const rows = data?.users || data || [];
+      if (!rows.length) {
+        usersList.innerHTML = '<div class="empty-row">لا يوجد مستخدمون بعد</div>';
+        return;
+      }
+      usersList.innerHTML = rows.map(u => `
+        <div class="user-row" data-id="${u.id}">
+          <div class="user-row-left">
+            <div class="user-avatar">${initials(u.name)}</div>
+            <div class="user-meta">
+              <span class="user-meta-name">${u.name || u.username}</span>
+              <span class="user-meta-sub mono">${u.username}</span>
+            </div>
+          </div>
+          <span class="user-role-badge ${u.role}">${ROLE_LABEL[u.role] || u.role}</span>
+          <button class="user-delete-btn" data-id="${u.id}" ${currentUser && u.id === currentUser.id ? 'disabled title="لا يمكنك حذف حسابك الحالي"' : 'title="حذف المستخدم"'}>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      `).join('');
+      usersList.querySelectorAll('.user-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteUser(btn.dataset.id, btn));
+      });
+    } catch (e) {
+      usersList.innerHTML = `<div class="empty-row">تعذّر تحميل المستخدمين${e.message ? ' — ' + e.message : ''}</div>`;
+    }
+  }
+
+  async function deleteUser(id, btn) {
+    if (!confirm('هل أنت متأكدة من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    btn.disabled = true;
+    try {
+      await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+      await refreshUsers();
+    } catch (e) {
+      alert(e.message || 'تعذّر حذف المستخدم');
+      btn.disabled = false;
+    }
+  }
+
+  if (addUserForm) {
+    addUserForm.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      addUserError.classList.add('hidden');
+      addUserBtn.disabled = true;
+      addUserBtn.textContent = 'جارٍ الإضافة…';
+      try {
+        await api('/api/admin/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: $('nu-name').value,
+            username: $('nu-username').value,
+            password: $('nu-password').value,
+            role: $('nu-role').value,
+          }),
+        });
+        addUserForm.reset();
+        await refreshUsers();
+      } catch (e) {
+        addUserError.textContent = e.message || 'تعذّر إضافة المستخدم';
+        addUserError.classList.remove('hidden');
+      } finally {
+        addUserBtn.disabled = false;
+        addUserBtn.textContent = 'إضافة المستخدم';
+      }
+    });
+  }
+
   // ---------------- WebSocket (تحديث فوري بدل الاستعلام الدوري) ----------------
   function connectWS() {
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
@@ -207,6 +292,7 @@
       v.classList.toggle('is-active', v.id === 'view-' + view);
     });
     moveGlider(tab);
+    if (view === 'users') refreshUsers();
   }
   tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
   window.addEventListener('resize', () => {
@@ -262,6 +348,7 @@
     loginScreen.classList.add('hidden');
     dashboard.classList.remove('hidden');
     userChip.textContent = `${currentUser.name} · ${currentUser.role === 'admin' ? 'مدير' : 'مشغّل'}`;
+    if (tabUsers) tabUsers.classList.toggle('hidden', currentUser.role !== 'admin');
     requestAnimationFrame(() => {
       const active = document.querySelector('.tab.is-active');
       if (active) moveGlider(active);
