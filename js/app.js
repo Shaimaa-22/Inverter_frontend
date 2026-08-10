@@ -147,6 +147,10 @@
     return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   }
 
+  const ICON_DISABLE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6.5 6.5l11 11"/></svg>';
+  const ICON_REACTIVATE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg>';
+  const ICON_DELETE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+
   async function refreshUsers() {
     if (!usersList) return;
     try {
@@ -160,6 +164,19 @@
         // الباك اند ممكن يرجّع الحقل isActive أو is_active — نتعامل مع الاثنين
         const active = (u.isActive ?? u.is_active) !== false;
         const isSelf = currentUser && u.id === currentUser.id;
+
+        let actions;
+        if (isSelf) {
+          actions = `<button class="user-delete-btn" disabled title="لا يمكنك تعديل حسابك الحالي">${ICON_DISABLE}</button>`;
+        } else if (active) {
+          actions = `<button class="user-delete-btn" data-action="disable" data-id="${u.id}" title="تعطيل المستخدم">${ICON_DISABLE}</button>`;
+        } else {
+          actions = `
+            <button class="user-delete-btn is-reactivate" data-action="reactivate" data-id="${u.id}" title="إعادة تفعيل المستخدم">${ICON_REACTIVATE}</button>
+            <button class="user-delete-btn is-danger" data-action="delete" data-id="${u.id}" title="حذف نهائي">${ICON_DELETE}</button>
+          `;
+        }
+
         return `
         <div class="user-row ${active ? '' : 'is-disabled'}" data-id="${u.id}">
           <div class="user-row-left">
@@ -171,44 +188,56 @@
           </div>
           <span class="user-role-badge ${u.role}">${ROLE_LABEL[u.role] || u.role}</span>
           ${active ? '' : '<span class="user-role-badge disabled">معطّل</span>'}
-          <button
-            class="user-delete-btn ${active ? '' : 'is-reactivate'}"
-            data-id="${u.id}"
-            data-active="${active}"
-            ${isSelf ? 'disabled title="لا يمكنك تعديل حسابك الحالي"' : (active ? 'title="تعطيل المستخدم"' : 'title="إعادة تفعيل المستخدم"')}
-          >
-            ${active
-              ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
-              : '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg>'
-            }
-          </button>
+          <div class="user-actions">${actions}</div>
         </div>
       `;
       }).join('');
-      usersList.querySelectorAll('.user-delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => toggleUserActive(btn.dataset.id, btn.dataset.active === 'true', btn));
+
+      usersList.querySelectorAll('.user-delete-btn[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => handleUserAction(btn.dataset.action, btn.dataset.id, btn));
       });
     } catch (e) {
       usersList.innerHTML = `<div class="empty-row">تعذّر تحميل المستخدمين${e.message ? ' — ' + e.message : ''}</div>`;
     }
   }
 
-  async function toggleUserActive(id, currentlyActive, btn) {
-    const confirmMsg = currentlyActive
-      ? 'هل أنت متأكدة من تعطيل هذا المستخدم؟ لن يستطيع تسجيل الدخول بعدها.'
-      : 'هل أنت متأكدة من إعادة تفعيل هذا المستخدم؟';
-    if (!confirm(confirmMsg)) return;
+  async function handleUserAction(action, id, btn) {
+    if (action === 'disable') {
+      if (!confirm('هل أنت متأكدة من تعطيل هذا المستخدم؟ لن يستطيع تسجيل الدخول بعدها.')) return;
+      btn.disabled = true;
+      try {
+        await api(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify({ isActive: false }) });
+        await refreshUsers();
+      } catch (e) {
+        alert(e.message || 'تعذّر تعطيل المستخدم');
+        btn.disabled = false;
+      }
+      return;
+    }
 
-    btn.disabled = true;
-    try {
-      await api(`/api/users/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ isActive: !currentlyActive }),
-      });
-      await refreshUsers();
-    } catch (e) {
-      alert(e.message || 'تعذّر تنفيذ العملية');
-      btn.disabled = false;
+    if (action === 'reactivate') {
+      if (!confirm('هل أنت متأكدة من إعادة تفعيل هذا المستخدم؟')) return;
+      btn.disabled = true;
+      try {
+        await api(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify({ isActive: true }) });
+        await refreshUsers();
+      } catch (e) {
+        alert(e.message || 'تعذّر إعادة التفعيل');
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    if (action === 'delete') {
+      if (!confirm('تحذير: هذا سيحذف المستخدم نهائياً ولا يمكن التراجع عن هذا الإجراء. متأكدة؟')) return;
+      btn.disabled = true;
+      try {
+        await api(`/api/users/${id}`, { method: 'DELETE' });
+        await refreshUsers();
+      } catch (e) {
+        alert(e.message || 'تعذّر حذف المستخدم نهائياً');
+        btn.disabled = false;
+      }
     }
   }
 
@@ -247,7 +276,6 @@
     }
 
     try {
-      // الحصول على WebSocket token قصير العمر باستخدام كوكي الجلسة الحالية
       const data = await api('/api/auth/ws-token');
       if (!data?.token) {
         throw new Error('لم يتم الحصول على WebSocket token');
