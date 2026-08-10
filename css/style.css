@@ -510,3 +510,15 @@ svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
 .user-delete-btn.is-reactivate:hover{
   border-color:var(--amber); color:var(--amber); background:var(--amber-soft);
 }
+.user-row.is-disabled{ opacity:.5; }
+.user-role-badge.disabled{
+  background:rgba(255,255,255,.05); color:var(--dim); border:1px solid var(--line);
+}
+.user-actions{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.user-delete-btn.is-reactivate:hover{
+  border-color:var(--amber); color:var(--amber); background:var(--amber-soft);
+}
+.user-delete-btn.is-danger{ color:#ffb0b8; border-color:rgba(255,90,110,.35); }
+.user-delete-btn.is-danger:hover{
+  border-color:var(--red); color:#fff; background:var(--red);
+}
