@@ -1,6 +1,5 @@
 (function(){
   const API = '';
-  const WS_URL = 'wss://inverter-backend.duckdns.org/ws';
   const $ = (id) => document.getElementById(id);
 
   const loginScreen = $('login-screen');
@@ -151,7 +150,7 @@
   async function refreshUsers() {
     if (!usersList) return;
     try {
-      const data = await api('/api/admin/users');
+      const data = await api('/api/users');
       const rows = data?.users || data || [];
       if (!rows.length) {
         usersList.innerHTML = '<div class="empty-row">لا يوجد مستخدمون بعد</div>';
@@ -180,17 +179,25 @@
     }
   }
 
-  async function deleteUser(id, btn) {
-    if (!confirm('هل أنت متأكدة من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-    btn.disabled = true;
-    try {
-      await api(`/api/admin/users/${id}`, { method: 'DELETE' });
-      await refreshUsers();
-    } catch (e) {
-      alert(e.message || 'تعذّر حذف المستخدم');
-      btn.disabled = false;
-    }
+async function deleteUser(id, btn) {
+  if (!confirm('هل أنت متأكدة من تعطيل هذا المستخدم؟')) return;
+
+  btn.disabled = true;
+
+  try {
+    await api(`/api/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        isActive: false
+      })
+    });
+
+    await refreshUsers();
+  } catch (e) {
+    alert(e.message || 'تعذّر تعطيل المستخدم');
+    btn.disabled = false;
   }
+}
 
   if (addUserForm) {
     addUserForm.addEventListener('submit', async (ev) => {
@@ -199,7 +206,7 @@
       addUserBtn.disabled = true;
       addUserBtn.textContent = 'جارٍ الإضافة…';
       try {
-        await api('/api/admin/users', {
+        await api('/api/users', {
           method: 'POST',
           body: JSON.stringify({
             name: $('nu-name').value,
@@ -221,34 +228,116 @@
   }
 
   // ---------------- WebSocket (تحديث فوري بدل الاستعلام الدوري) ----------------
-  function connectWS() {
-    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
-    ws = new WebSocket(WS_URL);
+  // ---------------- WebSocket (تحديث فوري بدل الاستعلام الدوري) ----------------
+
+async function connectWS() {
+  if (
+    ws &&
+    (
+      ws.readyState === WebSocket.OPEN ||
+      ws.readyState === WebSocket.CONNECTING
+    )
+  ) {
+    return;
+  }
+
+  try {
+    // Get a short-lived WebSocket token using the existing
+    // HttpOnly authentication cookie.
+    const data = await api('/api/auth/ws-token');
+
+    if (!data?.token) {
+      throw new Error('لم يتم الحصول على WebSocket token');
+    }
+
+    const token = data.token;
+
+    const wsUrl =
+      `wss://inverter-backend.duckdns.org/ws?token=${encodeURIComponent(token)}`;
+
+    console.log('[WS] Connecting...');
+
+    ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+      console.log('[WS] Connected');
+
+      if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = null;
+      }
     };
 
     ws.onmessage = (ev) => {
       let msg;
-      try { msg = JSON.parse(ev.data); } catch (_) { return; }
+
+      try {
+        msg = JSON.parse(ev.data);
+      } catch (_) {
+        return;
+      }
 
       if (msg.type === 'device_status') {
-        if (!pollingCommandId) renderPowerState(msg.data);
+        if (!pollingCommandId) {
+          renderPowerState(msg.data);
+        }
       } else if (msg.type === 'command_ack') {
         refreshCommands();
       }
     };
 
     ws.onclose = () => {
-      wsReconnectTimer = setTimeout(connectWS, 3000);
+      console.log('[WS] Connection closed');
+
+      ws = null;
+
+      if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer);
+      }
+
+      wsReconnectTimer = setTimeout(() => {
+        connectWS();
+      }, 3000);
     };
 
-    ws.onerror = () => {
-      ws.close();
+    ws.onerror = (error) => {
+      console.error('[WS] Error:', error);
+
+      if (ws) {
+        ws.close();
+      }
     };
+
+  } catch (error) {
+    console.error(
+      '[WS] Failed to obtain token/connect:',
+      error
+    );
+
+    ws = null;
+
+    if (wsReconnectTimer) {
+      clearTimeout(wsReconnectTimer);
+    }
+
+    wsReconnectTimer = setTimeout(() => {
+      connectWS();
+    }, 3000);
+  }
+}
+
+function disconnectWS() {
+  if (wsReconnectTimer) {
+    clearTimeout(wsReconnectTimer);
+    wsReconnectTimer = null;
   }
 
+  if (ws) {
+    ws.onclose = null;
+    ws.close();
+    ws = null;
+  }
+}
   function disconnectWS() {
     if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
     if (ws) { ws.onclose = null; ws.close(); ws = null; }
