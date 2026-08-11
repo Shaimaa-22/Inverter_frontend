@@ -4,214 +4,218 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0b0f14" />
-<title>لوحة تحكم الإنفرتر — INVERTER-01</title>
+<title>نظام التحكم بالإنفرتر — INVERTER-01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<style>
+  :root{
+    --bg:#06090c;
+    --surface:rgba(20,27,35,.55);
+    --border:rgba(255,255,255,.08);
+    --text:#f3f6f9;
+    --text-dim:#9aa7b2;
+    --text-faint:#5b6773;
+    --amber:#ffb238;
+    --amber-soft:rgba(255,178,56,.16);
+    --amber-glow:rgba(255,178,56,.55);
+    --teal:#33e5cf;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    overflow:hidden;
+    position:relative;
+  }
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  canvas#wave{
+    position:fixed;inset:0;width:100%;height:100%;display:block;
+  }
+
+  .vignette{
+    position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse 60% 50% at 50% 100%, rgba(6,9,12,.9) 0%, transparent 60%),
+               radial-gradient(ellipse 90% 60% at 50% 0%, rgba(6,9,12,.6) 0%, transparent 55%);
+  }
+
+  .stage{
+    position:relative;z-index:2;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;
+  }
+
+  .top-id{
+    position:fixed;top:26px;right:28px;left:28px;z-index:3;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .top-brand{display:flex;align-items:center;gap:9px}
+  .top-mark{width:26px;height:26px;color:var(--amber)}
+  .top-mark svg{width:100%;height:100%}
+  .top-name{font-size:12.5px;color:var(--text-dim);letter-spacing:.02em}
+  .top-status{
+    display:flex;align-items:center;gap:7px;color:var(--text-faint);font-size:11px;letter-spacing:.06em;
+  }
+  .top-status .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:blink 2s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .core{
+    position:relative;
+    width:150px;height:150px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:36px;
+  }
+  .core svg{width:44px;height:44px;color:var(--amber);position:relative;z-index:2;
+    filter:drop-shadow(0 0 14px var(--amber-glow));}
+  .ring{
+    position:absolute;inset:0;border-radius:50%;
+    border:1px solid rgba(255,178,56,.22);
+  }
+  .ring.r1{animation:spin 22s linear infinite}
+  .ring.r2{inset:20px;border-color:rgba(51,229,207,.18);animation:spin 16s linear infinite reverse}
+  .ring.r3{inset:40px;border-style:dashed;border-color:rgba(255,178,56,.14);animation:spin 30s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .pulse-ring{
+    position:absolute;inset:0;border-radius:50%;
+    border:1px solid rgba(255,178,56,.4);
+    animation:pulse-out 2.8s ease-out infinite;
+  }
+  .pulse-ring.p2{animation-delay:1.4s}
+  @keyframes pulse-out{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+
+  h1{
+    font-size:clamp(24px,4vw,32px);
+    font-weight:700;text-align:center;margin-bottom:8px;
+    letter-spacing:-.01em;
+  }
+  .tagline{
+    color:var(--text-dim);font-size:14px;text-align:center;margin-bottom:38px;
+    max-width:34ch;
+  }
+  .tagline .mono{color:var(--teal)}
+
+  .btn-primary{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:15px 32px;border-radius:100px;
+    background:var(--amber);color:#1a1204;
+    font-weight:600;font-size:15.5px;border:none;cursor:pointer;
+    box-shadow:0 8px 30px -6px var(--amber-glow);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 38px -6px var(--amber-glow)}
+  .btn-primary:active{transform:translateY(0) scale(.98)}
+  .btn-primary:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .btn-primary svg{width:16px;height:16px}
+
+  .bottom-strip{
+    position:fixed;bottom:22px;right:28px;left:28px;z-index:3;
+    display:flex;justify-content:space-between;align-items:center;
+    color:var(--text-faint);font-size:10.5px;letter-spacing:.05em;
+  }
+
+  @media (max-width:520px){
+    .core{width:120px;height:120px;margin-bottom:28px}
+    .core svg{width:36px;height:36px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .ring,.pulse-ring,.top-status .dot{animation:none}
+  }
+</style>
 </head>
 <body>
 
-  <!-- ============ LOGIN ============ -->
-  <div id="login-screen">
-    <div class="login-card">
-      <div class="login-brand">
-        <span class="logo-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"></path>
-          </svg>
-        </span>
-        <div class="login-brand-text">
-          <span class="login-brand-name" data-i18n="login.brandName">نظام التحكم بالإنفرتر</span>
-          <span class="login-brand-id mono">INVERTER-01</span>
-        </div>
-        <button class="lang-toggle" id="lang-toggle" type="button" aria-label="Language"></button>
-      </div>
+<canvas id="wave"></canvas>
+<div class="vignette"></div>
 
-      <div class="factory-badge">
-        <img src="assets/factory-logo.jpeg" alt="شعار المصنع" class="factory-badge-logo" />
-        <span class="factory-badge-text">مشروع تابع لـ <strong id="factory-name">اسم المصنع</strong></span>
-      </div>
+<div class="top-id">
+  <div class="top-brand">
+    <span class="top-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"></path></svg>
+    </span>
+    <span class="top-name mono">INVERTER-01</span>
+  </div>
+  <span class="top-status mono"><span class="dot"></span>LIVE</span>
+</div>
 
-      <div class="login-heading">
-        <h1 class="login-title" data-i18n="login.title">تسجيل الدخول</h1>
-        <p class="login-subtitle" data-i18n="login.subtitle">أدخل بيانات الاعتماد للوصول إلى وحدة التحكم</p>
-      </div>
-
-      <div id="login-error" class="login-error hidden"></div>
-
-      <form id="login-form" novalidate>
-        <div class="field">
-          <label for="username" data-i18n="login.username">اسم المستخدم</label>
-          <input id="username" type="text" autocomplete="username" data-i18n-placeholder="login.usernamePlaceholder" placeholder="أدخل اسم المستخدم" required />
-        </div>
-        <div class="field">
-          <label for="password" data-i18n="login.password">كلمة المرور</label>
-          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
-        </div>
-        <button class="btn-primary" type="submit" id="login-btn" data-i18n="login.submit">دخول</button>
-      </form>
-
-      <div class="login-foot mono" data-i18n="login.foot">اتصال مُشفّر · وصول مُصرّح فقط</div>
-    </div>
+<div class="stage">
+  <div class="core">
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring p2"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"></path></svg>
   </div>
 
-  <!-- ============ DASHBOARD ============ -->
-  <div id="dashboard" class="hidden">
-    <header>
-      <div class="brand">
-        <span class="logo-mark sm" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"></path>
-          </svg>
-        </span>
-        <span class="brand-id mono">INVERTER-01</span>
-        <span class="header-divider" aria-hidden="true"></span>
-        <img src="assets/factory-logo.jpeg" alt="شعار المصنع" class="header-factory-logo" />
-        <span class="conn-pill"><span id="conn-dot" class="dot off"></span><span id="conn-text">—</span></span>
-      </div>
-      <div class="header-right">
-        <span class="user-chip" id="user-chip"></span>
-        <button class="btn-ghost" id="logout-btn">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
-          <span>خروج</span>
-        </button>
-      </div>
-    </header>
+  <h1>نظام التحكم بالإنفرتر</h1>
+  <p class="tagline">تحكّم ومراقبة لحظية عبر اتصال <span class="mono">مشفّر</span></p>
 
-    <nav class="tabbar" role="tablist">
-      <div class="tabbar-inner">
-        <button class="tab is-active" data-view="control" role="tab" aria-selected="true">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5"/></svg>
-          <span>التحكم</span>
-        </button>
-        <button class="tab" data-view="log" role="tab" aria-selected="false">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
-          <span>سجل الأوامر</span>
-          <span class="tab-live"></span>
-        </button>
-        <button class="tab hidden" data-view="users" id="tab-users" role="tab" aria-selected="false">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span>المستخدمون</span>
-        </button>
-        <span class="tab-glider" aria-hidden="true"></span>
-      </div>
-    </nav>
+  <a href="login.html" class="btn-primary">
+    الدخول إلى لوحة التحكم
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+  </a>
+</div>
 
-    <main>
-      <div class="main-inner">
-        <!-- ===== VIEW: CONTROL ===== -->
-        <div id="view-control" class="view is-active">
-          <div id="fault-banner" class="fault-banner hidden">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span id="fault-text"></span>
-          </div>
+<div class="bottom-strip mono">
+  <span>ESP32 · TLS</span>
+  <span>وصول مُصرّح فقط</span>
+</div>
 
-          <section class="control-card" data-anim>
-            <div class="card-eyebrow mono">وحدة التحكم الرئيسية</div>
-            <div class="switch-zone">
-              <div class="switch-wrap">
-                <span class="orb-aura" aria-hidden="true"></span>
-                <svg class="ring" viewBox="0 0 220 220">
-                  <circle class="ring-track" cx="110" cy="110" r="106"></circle>
-                  <circle id="heartbeat-ring" class="ring-heartbeat offline" cx="110" cy="110" r="106"></circle>
-                </svg>
-                <button id="power-btn" class="state-off" disabled>
-                  <div class="icon"></div>
-                  <div class="state-label" id="state-label">—</div>
-                  <div class="state-sub" id="state-sub">جاري التحميل</div>
-                </button>
-              </div>
-              <div class="relay-caption" id="relay-caption">اضغط للتشغيل أو الإطفاء — يتم تأكيد الأمر فعليًا من الجهاز قبل تغيير الحالة</div>
-            </div>
-          </section>
+<script>
+(function(){
+  const canvas = document.getElementById('wave');
+  const ctx = canvas.getContext('2d');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let w, h, dpr;
 
-          <section class="stats-grid">
-            <div class="stat-card" data-anim>
-              <div class="stat-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 20 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></div>
-              <div class="stat-body"><div class="stat-label">قوة الإشارة</div><div class="stat-value mono" id="stat-rssi">—</div></div>
-            </div>
-            <div class="stat-card" data-anim>
-              <div class="stat-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-              <div class="stat-body"><div class="stat-label">مدة التشغيل</div><div class="stat-value mono" id="stat-uptime">—</div></div>
-            </div>
-            <div class="stat-card" data-anim>
-              <div class="stat-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2"/><path d="M15 2v2"/><path d="M9 20v2"/><path d="M15 20v2"/><path d="M20 9h2"/><path d="M20 14h2"/><path d="M2 9h2"/><path d="M2 14h2"/></svg></div>
-              <div class="stat-body"><div class="stat-label">إصدار الفيرموير</div><div class="stat-value mono" id="stat-fw">—</div></div>
-            </div>
-            <div class="stat-card" data-anim>
-              <div class="stat-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-              <div class="stat-body"><div class="stat-label">آخر اتصال</div><div class="stat-value mono" id="stat-lastseen">—</div></div>
-            </div>
-          </section>
-        </div>
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = window.innerWidth; h = window.innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
 
-        <!-- ===== VIEW: COMMAND LOG ===== -->
-        <div id="view-log" class="view">
-          <section class="panel" data-anim>
-            <div class="panel-head">
-              <div class="panel-title">سجل الأوامر</div>
-              <div class="panel-refresh mono" id="cmd-refresh-tag"><span class="live-dot"></span> تحديث فوري</div>
-            </div>
-            <div id="cmd-list"></div>
-          </section>
-        </div>
+  function drawWave(t, amp, freq, speed, color, lineWidth, yOffset, glow){
+    ctx.beginPath();
+    const step = 6;
+    for(let x = 0; x <= w; x += step){
+      const y = yOffset + Math.sin((x * freq) + t * speed) * amp * (0.5 + 0.5*Math.sin(x*0.0025 + t*0.4));
+      if(x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = glow;
+    ctx.stroke();
+  }
 
-        <!-- ===== VIEW: USERS (admin only) ===== -->
-        <div id="view-users" class="view">
-          <section class="panel" data-anim>
-            <div class="panel-head">
-              <div class="panel-title">إضافة مستخدم جديد</div>
-            </div>
-            <form id="add-user-form" class="user-form">
-              <div class="user-form-row">
-                <div class="field">
-                  <label for="nu-name">الاسم</label>
-                  <input id="nu-name" type="text" placeholder="الاسم الكامل" required />
-                </div>
-                <div class="field">
-                  <label for="nu-username">اسم المستخدم</label>
-                  <input id="nu-username" type="text" autocomplete="off" placeholder="username" required />
-                </div>
-              </div>
-              <div class="user-form-row">
-                <div class="field">
-                  <label for="nu-password">كلمة المرور</label>
-                  <input id="nu-password" type="password" autocomplete="new-password" placeholder="••••••••" required />
-                </div>
-                <div class="field">
-                  <label for="nu-role">الصلاحية</label>
-                  <select id="nu-role">
-                    <option value="operator">مشغّل</option>
-                    <option value="admin">مدير</option>
-                  </select>
-                </div>
-              </div>
-              <div id="add-user-error" class="login-error hidden"></div>
-              <button class="btn-primary" type="submit" id="add-user-btn">إضافة المستخدم</button>
-            </form>
-          </section>
+  let t0 = 0;
+  function frame(ts){
+    t0 = ts / 1000;
+    ctx.clearRect(0,0,w,h);
+    const midY = h * 0.62;
 
-          <section class="panel" data-anim>
-            <div class="panel-head">
-              <div class="panel-title">المستخدمون الحاليون</div>
-            </div>
-            <div id="users-list"></div>
-          </section>
-        </div>
-      </div>
-    </main>
+    drawWave(t0, h*0.05, 0.006, 1.1, 'rgba(255,178,56,0.55)', 1.6, midY, 14);
+    drawWave(t0+2, h*0.08, 0.004, 0.8, 'rgba(255,178,56,0.22)', 1.2, midY + h*0.06, 10);
+    drawWave(t0+4, h*0.035, 0.008, 1.4, 'rgba(51,229,207,0.28)', 1, midY - h*0.05, 10);
 
-    <footer class="app-foot mono">
-      <div class="foot-line">لوحة تحكم الإنفرتر · اتصال آمن في الوقت الفعلي</div>
-      <div class="foot-client">
-        <span>تطوير</span>
-        <img src="assets/client-logo.jpeg" alt="شعار الشركة" class="foot-client-logo" />
-        <span id="client-name">اسم الشركة</span>
-      </div>
-    </footer>
-  </div>
+    if(!reduced) requestAnimationFrame(frame);
+  }
 
-<script type="module" src="js/app.js"></script>
+  if(reduced){
+    frame(0);
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+
 </body>
 </html>
