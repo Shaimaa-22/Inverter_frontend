@@ -2,6 +2,13 @@
   const API = '';
   const $ = (id) => document.getElementById(id);
 
+  // ---------------- تعقيم النصوص قبل حقنها بالـ HTML (حماية من XSS) ----------------
+  function esc(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
   const loginScreen = $('login-screen');
   const dashboard = $('dashboard');
   const loginForm = $('login-form');
@@ -130,10 +137,10 @@
       cmdList.innerHTML = rows.map(c => `
         <div class="cmd-row">
           <div class="cmd-left">
-            <span class="cmd-cmd ${c.command}">${c.command}</span>
-            <span class="cmd-time">${fmtAgo(c.created_at)}</span>
+            <span class="cmd-cmd ${esc(c.command)}">${esc(c.command)}</span>
+            <span class="cmd-time">${esc(fmtAgo(c.created_at))}</span>
           </div>
-          <span class="badge ${c.status}">${CMD_LABEL[c.status] || c.status}</span>
+          <span class="badge ${esc(c.status)}">${esc(CMD_LABEL[c.status] || c.status)}</span>
         </div>
       `).join('');
     } catch (e) { /* silent */ }
@@ -163,30 +170,32 @@
       usersList.innerHTML = rows.map(u => {
         // الباك اند ممكن يرجّع الحقل isActive أو is_active — نتعامل مع الاثنين
         const active = (u.isActive ?? u.is_active) !== false;
-        const isSelf = currentUser && u.id === currentUser.id;
+        // مقارنة كنصوص لتجنّب فشل المقارنة بسبب اختلاف النوع (string/number) بين المصدرين
+        const isSelf = currentUser && String(u.id) === String(currentUser.id);
+        const safeId = esc(u.id);
 
         let actions;
         if (isSelf) {
           actions = `<button class="user-delete-btn" disabled title="لا يمكنك تعديل حسابك الحالي">${ICON_DISABLE}</button>`;
         } else if (active) {
-          actions = `<button class="user-delete-btn" data-action="disable" data-id="${u.id}" title="تعطيل المستخدم">${ICON_DISABLE}</button>`;
+          actions = `<button class="user-delete-btn" data-action="disable" data-id="${safeId}" title="تعطيل المستخدم">${ICON_DISABLE}</button>`;
         } else {
           actions = `
-            <button class="user-delete-btn is-reactivate" data-action="reactivate" data-id="${u.id}" title="إعادة تفعيل المستخدم">${ICON_REACTIVATE}</button>
-            <button class="user-delete-btn is-danger" data-action="delete" data-id="${u.id}" title="حذف نهائي">${ICON_DELETE}</button>
+            <button class="user-delete-btn is-reactivate" data-action="reactivate" data-id="${safeId}" title="إعادة تفعيل المستخدم">${ICON_REACTIVATE}</button>
+            <button class="user-delete-btn is-danger" data-action="delete" data-id="${safeId}" title="حذف نهائي">${ICON_DELETE}</button>
           `;
         }
 
         return `
-        <div class="user-row ${active ? '' : 'is-disabled'}" data-id="${u.id}">
+        <div class="user-row ${active ? '' : 'is-disabled'}" data-id="${safeId}">
           <div class="user-row-left">
-            <div class="user-avatar">${initials(u.name)}</div>
+            <div class="user-avatar">${esc(initials(u.name))}</div>
             <div class="user-meta">
-              <span class="user-meta-name">${u.name || u.username}</span>
-              <span class="user-meta-sub mono">${u.username}</span>
+              <span class="user-meta-name">${esc(u.name || u.username)}</span>
+              <span class="user-meta-sub mono">${esc(u.username)}</span>
             </div>
           </div>
-          <span class="user-role-badge ${u.role}">${ROLE_LABEL[u.role] || u.role}</span>
+          <span class="user-role-badge ${esc(u.role)}">${esc(ROLE_LABEL[u.role] || u.role)}</span>
           ${active ? '' : '<span class="user-role-badge disabled">معطّل</span>'}
           <div class="user-actions">${actions}</div>
         </div>
@@ -197,7 +206,7 @@
         btn.addEventListener('click', () => handleUserAction(btn.dataset.action, btn.dataset.id, btn));
       });
     } catch (e) {
-      usersList.innerHTML = `<div class="empty-row">تعذّر تحميل المستخدمين${e.message ? ' — ' + e.message : ''}</div>`;
+      usersList.innerHTML = `<div class="empty-row">تعذّر تحميل المستخدمين${e.message ? ' — ' + esc(e.message) : ''}</div>`;
     }
   }
 
