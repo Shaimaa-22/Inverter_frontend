@@ -49,9 +49,30 @@
       const err = new Error(body?.error?.message || 'حدث خطأ غير متوقع');
       err.code = body?.error?.code;
       err.status = res.status;
+      err.details = body?.error?.details;
       throw err;
     }
     return body?.data;
+  }
+
+  // ---------------- ترجمة أخطاء التحقق (Zod) إلى رسائل عربية واضحة بحسب اسم الحقل ----------------
+  const FIELD_LABELS = {
+    name: 'الاسم',
+    username: 'اسم المستخدم',
+    password: 'كلمة المرور',
+    role: 'الصلاحية',
+    isActive: 'حالة التفعيل',
+  };
+
+  function formatValidationError(err) {
+    if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length) {
+      return err.details.map((issue) => {
+        const fieldKey = issue.path && issue.path[0];
+        const label = FIELD_LABELS[fieldKey] || fieldKey || 'الحقل';
+        return `${label}: ${issue.message}`;
+      }).join(' — ');
+    }
+    return err.message || 'حدث خطأ غير متوقع';
   }
 
   function fmtUptime(sec) {
@@ -269,7 +290,7 @@
         addUserForm.reset();
         await refreshUsers();
       } catch (e) {
-        addUserError.textContent = e.message || 'تعذّر إضافة المستخدم';
+        addUserError.textContent = formatValidationError(e) || 'تعذّر إضافة المستخدم';
         addUserError.classList.remove('hidden');
       } finally {
         addUserBtn.disabled = false;
