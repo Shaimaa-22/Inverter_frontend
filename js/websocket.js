@@ -5,7 +5,10 @@ export function createWebSocket(api, handlers) {
     try {
       const {token} = await api('/api/auth/ws-token');
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      socket = new WebSocket(`${protocol}//${location.host}/ws?token=${encodeURIComponent(token)}`);
+      const host = location.hostname.endsWith('.vercel.app')
+        ? 'inverter-backend.duckdns.org'
+        : location.host;
+      socket = new WebSocket(`${protocol}//${host}/ws?token=${encodeURIComponent(token)}`);
       socket.onopen = handlers.open;
       socket.onmessage = event => { try { handlers.message?.(JSON.parse(event.data)); } catch (_) {} };
       socket.onclose = () => { socket=null; if(!stopped) timer=setTimeout(connect,3000); handlers.close?.(); };

@@ -9,7 +9,9 @@ export function createDeviceController(api, refreshCommands) {
     $('conn-dot').className=`dot ${online?'on':'off'} ${online?'pulse':''}`; $('conn-text').textContent=online?'متصل':'غير متصل';
     button.disabled=!online||busy;
     if(!online){button.classList.add('state-offline');$('state-label').textContent='غير متصل';$('state-sub').textContent='ESP32 offline';return;}
-    const on=device.relay_state==='ON';button.classList.add(on?'state-on':'state-off');$('state-label').textContent=on?'شغّال':'مطفي';$('state-sub').textContent=device.inverter_state||(on?'RUNNING':'STOPPED');
+    const on=device.relay_state==='ON';
+    const inverterState=!device.inverter_state||device.inverter_state==='UNKNOWN'?'حالة الإنفرتر غير معروفة':device.inverter_state;
+    button.classList.add(on?'state-on':'state-off');$('state-label').textContent=on?'شغّال':'مطفي';$('state-sub').textContent=inverterState;
     if(!busy)caption.textContent='اضغط للتشغيل أو الإطفاء — يتم تأكيد الأمر فعليًا من الجهاز قبل تغيير الحالة';
     $('stat-rssi').textContent=device.wifi_rssi!=null?`${device.wifi_rssi} dBm`:'—';$('stat-uptime').textContent=fmtUptime(device.uptime_seconds);$('stat-fw').textContent=device.firmware_version||'—';$('stat-lastseen').textContent=fmtAgo(device.last_seen);
     $('fault-banner').classList.toggle('hidden',!device.fault_code);$('fault-text').textContent=device.fault_code?`خطأ بالجهاز: ${device.fault_code}`:'';
