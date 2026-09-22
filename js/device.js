@@ -1,4 +1,4 @@
-import { $, fmtUptime, fmtAgo, showToast } from './ui.js';
+import { $, showToast } from './ui.js';
 import { formatError } from './api.js';
 
 export function createDeviceController(api, refreshCommands) {
@@ -13,7 +13,6 @@ export function createDeviceController(api, refreshCommands) {
     const inverterState=!device.inverter_state||device.inverter_state==='UNKNOWN'?'حالة الإنفرتر غير معروفة':device.inverter_state;
     button.classList.add(on?'state-on':'state-off');$('state-label').textContent=on?'شغّال':'مطفي';$('state-sub').textContent=inverterState;
     if(!busy)caption.textContent='اضغط للتشغيل أو الإطفاء — يتم تأكيد الأمر فعليًا من الجهاز قبل تغيير الحالة';
-    $('stat-rssi').textContent=device.wifi_rssi!=null?`${device.wifi_rssi} dBm`:'—';$('stat-uptime').textContent=fmtUptime(device.uptime_seconds);$('stat-fw').textContent=device.firmware_version||'—';$('stat-lastseen').textContent=fmtAgo(device.last_seen);
     $('fault-banner').classList.toggle('hidden',!device.fault_code);$('fault-text').textContent=device.fault_code?`خطأ بالجهاز: ${device.fault_code}`:'';
   }
   async function refresh(){try{const {device}=await api('/api/device/status');if(!requestId)render(device);}catch(_){$('conn-text').textContent='خطأ اتصال';}}

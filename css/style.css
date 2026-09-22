@@ -99,10 +99,6 @@ h1{font-size:inherit; font-weight:inherit;}
 /* entrance animation */
 @keyframes fade-up{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
 [data-anim]{animation:fade-up .6s cubic-bezier(.2,.7,.2,1) both;}
-.stats-grid [data-anim]:nth-child(1){animation-delay:.05s;}
-.stats-grid [data-anim]:nth-child(2){animation-delay:.11s;}
-.stats-grid [data-anim]:nth-child(3){animation-delay:.17s;}
-.stats-grid [data-anim]:nth-child(4){animation-delay:.23s;}
 
 /* ======================================================
    LOGIN
@@ -346,29 +342,6 @@ svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
 }
 
 /* ======================================================
-   STATS
-   ====================================================== */
-.stats-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;}
-.stat-card{
-  position:relative;
-  background:linear-gradient(180deg, rgba(19,28,41,0.85), rgba(15,21,32,0.9));
-  border:1px solid var(--line); border-radius:var(--radius-sm);
-  padding:16px; display:flex; flex-direction:column; gap:12px;
-  transition:border-color .2s, transform .2s, box-shadow .2s;
-}
-.stat-card:hover{
-  border-color:rgba(255,180,61,.35); transform:translateY(-3px);
-  box-shadow:0 16px 34px -20px rgba(0,0,0,.9), 0 0 0 1px rgba(255,180,61,.06);
-}
-.stat-ico{
-  width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
-  color:var(--amber); background:var(--amber-soft); border:1px solid rgba(255,180,61,.2);
-}
-.stat-body{display:flex; flex-direction:column; gap:5px;}
-.stat-label{font-size:11px; color:var(--dim); letter-spacing:.03em;}
-.stat-value{font-size:17px; font-weight:600; color:var(--text);}
-
-/* ======================================================
    COMMAND LOG
    ====================================================== */
 .panel{
@@ -495,7 +468,6 @@ svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
   .brand-id{display:none;}
   .tabbar{padding:18px 14px 0;}
   main{padding:20px 14px 36px;}
-  .stats-grid{grid-template-columns:repeat(2,1fr);}
   .switch-wrap{width:210px; height:210px;}
   .user-chip{max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 }
