@@ -522,3 +522,23 @@ svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
 .user-delete-btn.is-danger:hover{
   border-color:var(--red); color:#fff; background:var(--red);
 }
+
+.user-delete-btn.is-edit:hover{
+  border-color:var(--amber); color:var(--amber); background:var(--amber-soft);
+}
+.toast-region{
+  position:fixed; inset-inline-start:20px; bottom:20px; z-index:1000;
+  display:flex; flex-direction:column; gap:10px; width:min(390px,calc(100vw - 40px));
+}
+.toast{
+  display:flex; align-items:flex-start; gap:10px; padding:13px 15px;
+  color:var(--text); background:rgba(18,24,35,.97); border:1px solid var(--line);
+  border-radius:12px; box-shadow:0 16px 44px rgba(0,0,0,.4);
+  animation:toast-in .2s ease-out;
+}
+.toast::before{content:''; width:8px; height:8px; margin-top:6px; border-radius:50%; background:var(--amber); flex:none;}
+.toast.success::before{background:var(--green);}
+.toast.error::before{background:var(--red);}
+.toast-title{display:block; font-weight:700; margin-bottom:2px;}
+.toast-message{display:block; color:var(--muted); font-size:12px; line-height:1.55;}
+@keyframes toast-in{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
